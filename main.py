@@ -3,6 +3,11 @@ from GameWrapper import GameWrapper
 import os, sys
 import utils
 
+
+import players.MinimaxPlayer
+import players.SimplePlayer
+
+
 if __name__ == "__main__":
     players_options = [x+'Player' for x in ['Live', 'Simple', 'Minimax', 'Alphabeta', 'GlobalTimeAB', 'LightAB',
                                             'HeavyABPlayer', 'Compete']]
@@ -56,6 +61,11 @@ if __name__ == "__main__":
     __import__(player_2_type)
     player_1 = sys.modules[player_1_type].Player(game_time, penalty_score)
     player_2 = sys.modules[player_2_type].Player(game_time, penalty_score)
+
+    args.move_time = 10
+
+    player_1 = players.MinimaxPlayer.Player(game_time, penalty_score)
+    player_2 = players.SimplePlayer.Player(game_time, penalty_score)
 
     board = utils.get_board_from_csv(args.board)
 

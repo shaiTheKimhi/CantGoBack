@@ -3,6 +3,7 @@
 from utils import ALPHA_VALUE_INIT, BETA_VALUE_INIT
 #TODO: you can import more modules, if needed
 
+import players.MinimaxPlayer
 
 class SearchAlgos:
     def __init__(self, utility, succ, perform_move, goal):
@@ -20,6 +21,7 @@ class SearchAlgos:
 
     def search(self, state, depth, maximizing_player):
         pass
+
 
 
 class MiniMax(SearchAlgos):

@@ -4,6 +4,10 @@ MiniMax Player
 from players.AbstractPlayer import AbstractPlayer
 #TODO: you can import more modules, if needed
 import numpy as np
+from multiprocessing import Process
+import time
+
+
 
 class Player(AbstractPlayer):
     def __init__(self, game_time, penalty_score):
@@ -18,6 +22,7 @@ class Player(AbstractPlayer):
         self.fruits = {}
         #minimum duration for fruit existance
         self.duration = 0
+
 
     def set_game_params(self, board):
         """Set the game parameters needed for this player.
@@ -58,12 +63,24 @@ class Player(AbstractPlayer):
         # search through first position using maximum
 
         #TODO: add timeout for function and make iterative deepening, RIGHT NOW USING ARBITRARY DEPTH LIMIT
-        move = self.best_move(15)
 
 
+        #gets program start time
+        start_time = time.time()  #translates from miliseconds to seconds
+        #plays always while time remaining
+        lim = 0
+        current_time = start_time
+        move = self.best_move(0)
+        while current_time - start_time < time_limit * .25:
+            move, val = self.best_move(lim)
+            current_time = time.time()
+            time_passed = (current_time - start_time)
+            if val == float('inf'):
+                break
+            lim += 1
 
         new_pos = self.pos[0] + move[0], self.pos[1] + move[1]
-
+        print(f"Limit:{lim}")
         #should use new function to make a move, and to undo the same move
         """score = self.board[new_pos]
         self.board[new_pos] = 1
@@ -164,16 +181,7 @@ class Player(AbstractPlayer):
                 #make player move
                 prev = self.pos
                 old_fruits = self.effect_move(p, 1)
-                """
-                score = self.board[p]
-                self.score += score
-                self.board[p] = 1
-                self.board[pos] = -1
-                prev = self.pos
-                self.pos = p
-                if p in self.fruits.keys():
-                    self.fruits.pop(p)
-                """
+
                 #calculate minimax values for move and maximize
                 val = self.MiniMax(2, lim)
                 curr_max = max(curr_max, val)
@@ -182,17 +190,9 @@ class Player(AbstractPlayer):
 
                 #reset player move
                 self.undo_move(prev, p, 1, old_fruits)
-                """
-                self.pos = prev
-                self.board[p] = score
-                self.board[pos] = 1
-                self.score -= score
-                if score >= 3:
-                    self.fruits[p] = score
-                """
         if best is None:
             print(self.pos)
-        return best
+        return best, curr_max
 
 
     #TODO: MOVE THIS FUNCTION TO SearchAlgos.py file
@@ -209,16 +209,7 @@ class Player(AbstractPlayer):
             curr_max = -float('inf')
             for pos in self.succ(self.pos):
                 # make player move
-                """
-                score = self.board[pos]
-                self.score += score
-                self.board[pos] = 1
-                self.board[self.pos] = -1
-                prev = self.pos
-                self.pos = pos
-                if pos in self.fruits.keys():
-                    self.fruits.pop(pos)
-                """
+
                 prev_pos = self.pos
                 old_fruits = self.effect_move(pos, 1)
                 #find minimax value for player
@@ -230,19 +221,7 @@ class Player(AbstractPlayer):
 
                 # reset player move
                 self.undo_move(prev_pos, pos, 1, old_fruits)
-                """
-                self.pos = prev
-                self.board[pos] = score
-                self.board[self.pos] = 1
-                self.score -= score
 
-                if score >= 3:
-                    self.fruits[pos] = score
-                """
-
-                #for debug purposes TODO: DELETE THIS LINE!!!
-                if self.count_ones(self.board) != 1:
-                    print(self.board)
             #if curr_max == -float('inf'):
             #    curr_max = self.penalty_score
             return curr_max  #maximize our player, minimize the other
@@ -262,9 +241,6 @@ class Player(AbstractPlayer):
 
                 #reset rival move
                 self.undo_move(prev, pos, 2, old_fruits)
-                #DEBUG PURPOSES ONLY, TODO: DELETE THIS LINE
-                if self.count_ones(self.board) != 1:
-                    print(self.board)
             return curr_min  #maximize our player, minimize the other
 
     ########## helper functions for MiniMax algorithm ##########
