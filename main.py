@@ -65,11 +65,12 @@ if __name__ == "__main__":
     player_1 = sys.modules[player_1_type].Player(game_time, penalty_score)
     player_2 = sys.modules[player_2_type].Player(game_time, penalty_score)
 
-    args.move_time = 20
+    args.move_time = 7
     game_time = 200
 
     player_1 = players.AlphabetaPlayer.Player(game_time, penalty_score)
-    player_2 = players.GlobalTimeABPlayer.Player(game_time, penalty_score)
+    #player_2 = players.AlphabetaPlayer.Player(game_time, penalty_score)
+    player_2 = players.MinimaxPlayer.Player(game_time, penalty_score)
 
     board = utils.get_board_from_csv(args.board)
 

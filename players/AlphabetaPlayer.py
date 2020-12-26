@@ -42,7 +42,7 @@ class Player(AbstractPlayer):
     #alpha beta function search, similar to Minimax
     def MinimaxAB(self, turn, lim, alpha, beta):
         if self.minimax.goal(turn):
-            val1, val2 = self.minimax.utility() #tuple of player1, player 2
+            val1, val2 = self.minimax.utility()  #tuple of player1, player 2
             return float('inf') if val1 > val2 else -float('inf') if val1 < val2 else 0
         if lim == 0:
             val1, val2 = self.minimax.heuristic()  # tuple of player1, player 2
@@ -119,12 +119,12 @@ class Player(AbstractPlayer):
             move, val = self.minimax.best_move(lim)
             current_time = time.time()
             time_passed = (current_time - start_time)
-            if val == float('inf'):
+            if val == float('inf') or val == -float('inf'):
                 break
             lim += 1
 
         new_pos = self.minimax.pos[0] + move[0], self.minimax.pos[1] + move[1]
-        #print(f"Limit:{lim}")
+        #print(f"AB Limit:{lim}")
         #should use new function to make a move, and to undo the same move
 
         self.minimax.effect_move(new_pos, 1)  #player is always 1, opponent always 2
