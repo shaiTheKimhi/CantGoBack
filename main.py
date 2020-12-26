@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     player_1 = players.AlphabetaPlayer.Player(game_time, penalty_score)
     #player_2 = players.AlphabetaPlayer.Player(game_time, penalty_score)
-    player_2 = players.MinimaxPlayer.Player(game_time, penalty_score)
+    player_2 = players.SimplePlayer.Player(game_time, penalty_score)
 
     board = utils.get_board_from_csv(args.board)
 
