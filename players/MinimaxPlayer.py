@@ -72,12 +72,12 @@ class Player(AbstractPlayer):
             move, val = self.best_move(lim)
             current_time = time.time()
             time_passed = (current_time - start_time)
-            if val == float('inf'):
+            if val == float('inf') or val == -float('inf'):
                 break
             lim += 1
 
         new_pos = self.pos[0] + move[0], self.pos[1] + move[1]
-        #print(f"Limit:{lim}")
+        #print(f"MINIMAX Limit:{lim}")
 
         self.effect_move(new_pos, 1) #player is always 1, opponent always 2
         return move
@@ -131,7 +131,7 @@ class Player(AbstractPlayer):
         to_remove = []
         for pos in self.fruits.keys():
             self.fruits[pos]['duration'] -= 1
-            if self.fruits[pos]['duration'] == 0:
+            if self.fruits[pos]['duration'] == -1:
                 to_remove.append(pos)
         for pos in to_remove:
             self.fruits.pop(pos)
@@ -319,7 +319,13 @@ class Player(AbstractPlayer):
         elif len(nxt) == 2:
             if (nxt[0][0] == nxt[1][0] and nxt[0][1] != nxt[1][1]) or (nxt[0][1] == nxt[1][1] and nxt[0][0] != nxt[1][0]):
                 return 1
-        return 0
+            else:
+                return 0.1
+        elif len(nxt) == 1:
+            return 0.25
+        else:
+            return 0
+
 
     @staticmethod
     def distance(pos1, pos2):
