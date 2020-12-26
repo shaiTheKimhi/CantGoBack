@@ -62,9 +62,6 @@ class Player(AbstractPlayer):
         #TODO: erase the following line and implement this function.
         # search through first position using maximum
 
-        #TODO: add timeout for function and make iterative deepening, RIGHT NOW USING ARBITRARY DEPTH LIMIT
-
-
         #gets program start time
         start_time = time.time()  #translates from miliseconds to seconds
         #plays always while time remaining
@@ -80,19 +77,8 @@ class Player(AbstractPlayer):
             lim += 1
 
         new_pos = self.pos[0] + move[0], self.pos[1] + move[1]
-        print(f"Limit:{lim}")
-        #should use new function to make a move, and to undo the same move
-        """score = self.board[new_pos]
-        self.board[new_pos] = 1
-        self.board[self.pos] = -1
-        self.pos = new_pos
-        for pos in self.fruits.keys():
-            self.fruits[pos]['duration'] -= 1
-            if self.fruits[pos]['duration'] == 0:
-                self.fruits.pop(pos)
-        if new_pos in self.fruits.keys():
-            self.fruits.pop(new_pos)
-        """
+        #print(f"Limit:{lim}")
+
         self.effect_move(new_pos, 1) #player is always 1, opponent always 2
         return move
 
@@ -221,9 +207,6 @@ class Player(AbstractPlayer):
 
                 # reset player move
                 self.undo_move(prev_pos, pos, 1, old_fruits)
-
-            #if curr_max == -float('inf'):
-            #    curr_max = self.penalty_score
             return curr_max  #maximize our player, minimize the other
         #turn is enemy agent
         else:
