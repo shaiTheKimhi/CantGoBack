@@ -14,7 +14,62 @@ class Player(AbstractPlayer):
 
 
 
-    #finds best move to act
+    #alpha beta function search, similar to Minimax
+    def MinimaxAB(self, turn, lim, alpha, beta):
+        if self.minimax.goal(turn):
+            val1, val2 = self.minimax.utility()  #tuple of player1, player 2
+            return float('inf') if val1 > val2 else -float('inf') if val1 < val2 else 0
+        if lim == 0:
+            val1, val2 = self.minimax.heuristic(turn)  # tuple of player1, player 2
+            return val1 - val2
+        # turn is Agent
+        if turn == 1:
+            curr_max = -float('inf')
+            for pos in self.minimax.succ(self.minimax.pos):
+                # make player move
+
+                prev_pos = self.minimax.pos
+                old_fruits, old_stuck = self.minimax.effect_move(pos, 1)
+                # find minimax value for player
+
+                val = self.MinimaxAB(2, lim - 1, alpha, beta)
+
+                # save maximum of all values
+                curr_max = max(val, curr_max)
+
+                alpha = max(curr_max, alpha)
+                # reset player move
+                self.minimax.undo_move(prev_pos, pos, 1, old_fruits, old_stuck)
+                self.minimax.pos = prev_pos
+
+                if curr_max >= beta:
+                    return float('inf')  #cut branch, minimizing caller will not be taken
+
+            return curr_max  # maximize our player, minimize the other
+        # turn is enemy agent
+        else:
+            curr_min = float('inf')
+            for pos in self.minimax.succ(self.minimax.en_pos):
+                # make rival move
+                prev = self.minimax.en_pos
+                old_fruits, old_stuck = self.minimax.effect_move(pos, 2)
+                # find minimax value for rival
+                val = self.MinimaxAB(1, lim - 1, alpha, beta)
+
+                # save minimum of all values
+                curr_min = min(val, curr_min)
+
+                beta = min(curr_min, beta)
+
+                # reset rival move
+                self.minimax.undo_move(prev, pos, 2, old_fruits, old_stuck)
+                self.minimax.pos = prev
+                if curr_min <= alpha:
+                    return -float('inf')  #cut branch, maximizing caller will not be taken
+
+            return curr_min  # maximize our player, minimize the other
+
+    # finds best move to act
     def best_move(self, lim):
         pos = self.minimax.pos
         curr_max = -float('inf')
@@ -24,71 +79,24 @@ class Player(AbstractPlayer):
             if self.minimax.is_legal(p):
                 # make player move
                 prev = self.minimax.pos
-                old_fruits = self.minimax.effect_move(p, 1)
+                old_fruits, old_stuck = self.minimax.effect_move(p, 1)
 
                 # calculate minimax values for move and maximize
-                val = self.MiniMaxAB(2, lim, -float('inf'), float('inf'))
+                val = self.MinimaxAB(2, lim, -float('inf'), float('inf'))  # could replace curr_max to -inf if does not work, should work
                 curr_max = max(curr_max, val)
                 # keep best move
                 best = d if curr_max == val else best
 
                 # reset player move
-                self.minimax.undo_move(prev, p, 1, old_fruits)
+                self.minimax.undo_move(prev, p, 1, old_fruits, old_stuck)
+                self.minimax.pos = prev
+
+        #debug, should never happen anyway
+        if curr_max == -float('inf'):
+            nop = 0  # TODO: delete
         if best is None:
             print(self.minimax.pos)
         return best, curr_max
-
-
-    #alpha beta function search, similar to Minimax
-    def MinimaxAB(self, turn, lim, alpha, beta):
-        if self.minimax.goal(turn):
-            val1, val2 = self.minimax.utility()  #tuple of player1, player 2
-            return float('inf') if val1 > val2 else -float('inf') if val1 < val2 else 0
-        if lim == 0:
-            val1, val2 = self.minimax.heuristic()  # tuple of player1, player 2
-            return val1 - val2
-        # turn is Agent
-        if turn == 1:
-            curr_max = -float('inf')
-            for pos in self.minimax.succ(self.minimax.pos):
-                # make player move
-
-                prev_pos = self.minimax.pos
-                old_fruits = self.minimax.effect_move(pos, 1)
-                # find minimax value for player
-
-                val = self.minimax.MiniMax(2, lim - 1)
-
-                # save maximum of all values
-                curr_max = max(val, curr_max)
-
-                alpha = max(curr_max, alpha)
-                if curr_max >= beta:
-                    return float('inf')  #cut branch, minimizing caller will not be taken
-
-                # reset player move
-                self.minimax.undo_move(prev_pos, pos, 1, old_fruits)
-            return curr_max  # maximize our player, minimize the other
-        # turn is enemy agent
-        else:
-            curr_min = float('inf')
-            for pos in self.minimax.succ(self.minimax.en_pos):
-                # make rival move
-                prev = self.minimax.en_pos
-                old_fruits = self.minimax.effect_move(pos, 2)
-                # find minimax value for rival
-                val = self.minimax.MiniMax(1, lim - 1)
-
-                # save minimum of all values
-                curr_min = min(val, curr_min)
-
-                beta = min(curr_min, beta)
-                if curr_min <= beta:
-                    return -float('inf')  #cut branch, maximizing caller will not be taken
-
-                # reset rival move
-                self.minimax.undo_move(prev, pos, 2, old_fruits)
-            return curr_min  # maximize our player, minimize the other
 
 
     def set_game_params(self, board):
@@ -114,16 +122,18 @@ class Player(AbstractPlayer):
         #plays always while time remaining
         lim = 0
         current_time = start_time
-        move = self.minimax.best_move(0)
+        move, val = self.best_move(0)  #ab search
         while current_time - start_time < time_limit * .25:
-            move, val = self.minimax.best_move(lim)
+            move, val = self.best_move(lim + 1)  #ab search
             current_time = time.time()
             time_passed = (current_time - start_time)
-            if val == float('inf') or val == -float('inf'):
-                break
+            #if val == float('inf') or val == -float('inf'):
+            #    break
             lim += 1
 
-        new_pos = self.minimax.pos[0] + move[0], self.minimax.pos[1] + move[1]
+        print(f"alpha:{lim} time:{current_time - start_time} have:{time_limit}")
+
+        new_pos = (self.minimax.pos[0] + move[0], self.minimax.pos[1] + move[1])
         #print(f"AB Limit:{lim}")
         #should use new function to make a move, and to undo the same move
 

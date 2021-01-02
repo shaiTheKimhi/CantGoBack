@@ -43,7 +43,7 @@ class Player(AbstractPlayer):
         #turns 0 - n/5, 4n/5 - n gets 1/10 of time (half of average)
         #turns n/5 - 2n/5, 3n/5 - 4n/5 gets 1/5 of time (average)
         #turns 2n/5 - 3n/5 will get 2/5 of time (twice as average)
-        factors = [0.5, 1, 2, 1, 0.5]
+        factors = [2, 1, 1, 0.6, 0.4]
         turn_time = self.average_turn_time * factors[int(self.turn_number / self.max_nr_turns)]
         turn_time = time_limit if time_limit < turn_time else turn_time
 

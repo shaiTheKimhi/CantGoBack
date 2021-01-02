@@ -9,6 +9,9 @@ import players.SimplePlayer
 import players.AlphabetaPlayer
 import players.MinimaxPlayer
 import players.GlobalTimeABPlayer
+import players.LivePlayer
+import players.HeavyABPlayer
+import players.LightABPlayer
 
 
 if __name__ == "__main__":
@@ -65,12 +68,12 @@ if __name__ == "__main__":
     player_1 = sys.modules[player_1_type].Player(game_time, penalty_score)
     player_2 = sys.modules[player_2_type].Player(game_time, penalty_score)
 
-    args.move_time = 7
-    game_time = 200
+    args.move_time = 10
+    game_time = 500
 
-    player_1 = players.AlphabetaPlayer.Player(game_time, penalty_score)
+    player_1 = players.MinimaxPlayer.Player(game_time, penalty_score)
     #player_2 = players.AlphabetaPlayer.Player(game_time, penalty_score)
-    player_2 = players.SimplePlayer.Player(game_time, penalty_score)
+    player_2 = players.AlphabetaPlayer.Player(game_time, penalty_score)
 
     board = utils.get_board_from_csv(args.board)
 
