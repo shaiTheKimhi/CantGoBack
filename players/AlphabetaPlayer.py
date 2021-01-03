@@ -31,7 +31,6 @@ class Player(AbstractPlayer):
                 prev_pos = self.minimax.pos
                 old_fruits, old_stuck = self.minimax.effect_move(pos, 1)
                 # find minimax value for player
-
                 val = self.MinimaxAB(2, lim - 1, alpha, beta)
 
                 # save maximum of all values
@@ -63,7 +62,7 @@ class Player(AbstractPlayer):
 
                 # reset rival move
                 self.minimax.undo_move(prev, pos, 2, old_fruits, old_stuck)
-                self.minimax.pos = prev
+                self.minimax.en_pos = prev
                 if curr_min <= alpha:
                     return -float('inf')  #cut branch, maximizing caller will not be taken
 
@@ -124,14 +123,16 @@ class Player(AbstractPlayer):
         current_time = start_time
         move, val = self.best_move(0)  #ab search
         while current_time - start_time < time_limit * .25:
-            move, val = self.best_move(lim + 1)  #ab search
+            mv, val = self.best_move(lim + 1)  #ab search
             current_time = time.time()
             time_passed = (current_time - start_time)
-            #if val == float('inf') or val == -float('inf'):
-            #    break
+            if val != -float('inf'):
+                move = mv
+            if val == float('inf') or val == -float('inf'):
+                break
             lim += 1
 
-        print(f"alpha:{lim} time:{current_time - start_time} have:{time_limit}")
+        print(f"alpha:{lim} time:{current_time - start_time}")
 
         new_pos = (self.minimax.pos[0] + move[0], self.minimax.pos[1] + move[1])
         #print(f"AB Limit:{lim}")

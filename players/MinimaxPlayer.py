@@ -35,7 +35,7 @@ class Player(AbstractPlayer):
         """
         #TODO: erase the following line and implement this function.
         # This implementation is from SimplePlayer.py, might need to change this ##NOTE THIS COMMENT !!!
-        self.board = board
+        self.board = board.copy()
         pos = np.where(board == 1)
         en_pos = np.where(board == 2)
         # convert pos to tuple of ints
@@ -90,6 +90,7 @@ class Player(AbstractPlayer):
             lim += 1
 
         #Debug purpose:
+        print(f"Minimax lim:{lim} time:{current_time - start_time}")
         #if val <= -100:
         #    print(val)
         new_pos = self.pos[0] + move[0], self.pos[1] + move[1]
@@ -180,6 +181,9 @@ class Player(AbstractPlayer):
         (self.stuck, self.en_stuck) = (self.stuck + self.stuck_val([p for p in self.succ(self.pos)]), self.en_stuck) if turn == 1 else \
             (self.stuck, self.en_stuck + self.stuck_val([p for p in self.succ(self.en_pos)]))
 
+        if len(np.where(self.board == 1)[0]) != 1:
+            problem = True
+
         return old_fruits, (self.stuck, self.en_stuck)
 
     # undo effects of a certain move (move is from prev to pos: prev->pos, and we undo it), gets old fruits and restores it, if score in old location updates it
@@ -235,7 +239,9 @@ class Player(AbstractPlayer):
 
     #TODO: MOVE THIS FUNCTION TO SearchAlgos.py file
     #gets the calling Player, the current turn, the limit of depth and an object that stores time to end, if too low time remaining, stops immediately
-    def MiniMax(self, turn, lim): #TODO: add time check in function (might use different way to timeout minimax)
+    def MiniMax(self, turn, lim):
+        if len(np.where(self.board == 1)[0]) != 1:
+            problem = True
         if self.goal(turn):
             val1, val2 = self.utility()  #tuple of player1, player 2
             return float('inf') if val1 > val2 else -float('inf') if val1 < val2 else 0
