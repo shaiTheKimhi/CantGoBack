@@ -132,8 +132,6 @@ class Player(AbstractPlayer):
                 break
             lim += 1
 
-        print(f"alpha:{lim} time:{current_time - start_time}")
-
         new_pos = (self.minimax.pos[0] + move[0], self.minimax.pos[1] + move[1])
         #print(f"AB Limit:{lim}")
         #should use new function to make a move, and to undo the same move

@@ -87,13 +87,7 @@ class Player(AbstractPlayer):
             if val == float('inf') or val == -float('inf'):
                 break
             lim += 1
-
-        #Debug purpose:
-        print(f"Minimax lim:{lim} time:{current_time - start_time}")
-        #if val <= -100:
-        #    print(val)
         new_pos = self.pos[0] + move[0], self.pos[1] + move[1]
-        #print(f"MINIMAX Limit:{lim}")
 
         self.effect_move(new_pos, 1)  #player is always 1, opponent always 2
         return move
@@ -184,8 +178,6 @@ class Player(AbstractPlayer):
 
     # undo effects of a certain move (move is from prev to pos: prev->pos, and we undo it), gets old fruits and restores it, if score in old location updates it
     def undo_move(self, prev, pos, turn, old_fruits):
-        #if len(self.fruits) != len(old_fruits):
-        #    print(old_fruits)
         self.fruits = old_fruits
         if turn == 1:
             self.pos = prev

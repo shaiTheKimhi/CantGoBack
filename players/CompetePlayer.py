@@ -1,15 +1,19 @@
 """
-Player for the competition
+MiniMax Player with AlphaBeta pruning and global time
 """
 from players.AbstractPlayer import AbstractPlayer
 #TODO: you can import more modules, if needed
-
+import players.AlphabetaPlayer
+import numpy as np
 
 class Player(AbstractPlayer):
     def __init__(self, game_time, penalty_score):
         AbstractPlayer.__init__(self, game_time, penalty_score) # keep the inheritance of the parent's (AbstractPlayer) __init__()
-        #TODO: initialize more fields, if needed, and the wanted algorithm from SearchAlgos.py
-
+        #TODO: initialize more fields, if needed, and the AlphaBeta algorithm from SearchAlgos.py
+        self.alpha_beta_player = players.AlphabetaPlayer.Player(game_time, penalty_score)
+        self.max_nr_turns = 0  #indicates the number of free turns
+        self.turn_number = 1  #indicates the current turn number
+        self.average_turn_time = 0.0
 
     def set_game_params(self, board):
         """Set the game parameters needed for this player.
@@ -20,8 +24,12 @@ class Player(AbstractPlayer):
         No output is expected.
         """
         #TODO: erase the following line and implement this function.
-        raise NotImplementedError
-    
+        self.alpha_beta_player.set_game_params(board)
+        free_blocks = self.free_blocks(board)
+        self.max_nr_turns = free_blocks / 2 + 1  #maximum number of turns until finish is number of free blocks, our player will perform maximum of half + 1 of that
+        self.average_turn_time = self.game_time / self.max_nr_turns
+
+
 
     def make_move(self, time_limit, players_score):
         """Make move with this Player.
@@ -31,7 +39,16 @@ class Player(AbstractPlayer):
             - direction: tuple, specifing the Player's movement, chosen from self.directions
         """
         #TODO: erase the following line and implement this function.
-        raise NotImplementedError
+        turn_time = 0.0
+        #turns 0 - n/5, 4n/5 - n gets 1/10 of time (half of average)
+        #turns n/5 - 2n/5, 3n/5 - 4n/5 gets 1/5 of time (average)
+        #turns 2n/5 - 3n/5 will get 2/5 of time (twice as average)
+        factors = [2, 1, 1, 0.6, 0.4]
+        turn_time = self.average_turn_time * factors[int(self.turn_number / self.max_nr_turns)]
+        turn_time = time_limit if time_limit < turn_time else turn_time
+
+        self.turn_number += 1
+        return self.alpha_beta_player.make_move(turn_time, players_score)
 
 
     def set_rival_move(self, pos):
@@ -41,7 +58,7 @@ class Player(AbstractPlayer):
         No output is expected
         """
         #TODO: erase the following line and implement this function.
-        raise NotImplementedError
+        self.alpha_beta_player.set_rival_move(pos)
 
 
     def update_fruits(self, fruits_on_board_dict):
@@ -52,14 +69,17 @@ class Player(AbstractPlayer):
                                     'value' is the value of this fruit.
         No output is expected.
         """
-        #TODO: erase the following line and implement this function. In case you choose not to use this function, 
+        #TODO: erase the following line and implement this function. In case you choose not to use this function,
         # use 'pass' instead of the following line.
-        raise NotImplementedError
+        self.alpha_beta_player.update_fruits(fruits_on_board_dict)
 
 
     ########## helper functions in class ##########
     #TODO: add here helper functions in class, if needed
 
+    @staticmethod
+    def free_blocks(board):
+        return len(np.where(board == 0)[0]) + len(np.where(board >= 3)[0])
 
-    ########## helper functions for the search algorithm ##########
+    ########## helper functions for AlphaBeta algorithm ##########
     #TODO: add here the utility, succ, and perform_move functions used in AlphaBeta algorithm

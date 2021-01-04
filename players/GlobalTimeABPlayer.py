@@ -40,9 +40,10 @@ class Player(AbstractPlayer):
         """
         #TODO: erase the following line and implement this function.
         turn_time = 0.0
-        #turns 0 - n/5, 4n/5 - n gets 1/10 of time (half of average)
-        #turns n/5 - 2n/5, 3n/5 - 4n/5 gets 1/5 of time (average)
-        #turns 2n/5 - 3n/5 will get 2/5 of time (twice as average)
+        #turns 0 - n/5, gets 2/5 of average time
+        #turns n/5 - 3n/5, gets 1/5 of average time
+        #turns 3n/5 - 4n/5, gets 3/25 of average time
+        #turns 4n/5 - 1, gets 2/25 of average time
         factors = [2, 1, 1, 0.6, 0.4]
         turn_time = self.average_turn_time * factors[int(self.turn_number / self.max_nr_turns)]
         turn_time = time_limit if time_limit < turn_time else turn_time
