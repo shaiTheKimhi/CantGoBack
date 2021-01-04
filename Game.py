@@ -158,6 +158,7 @@ class Game:
 
         # choose value of fruit and update the tracking map
         value = random.randint(3, self.max_fruit_score)
+
         self.map[pos[0],pos[1]] = value
 
         # update fruits_on_board tracking

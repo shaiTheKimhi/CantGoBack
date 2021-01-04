@@ -5,6 +5,7 @@ from players.AbstractPlayer import AbstractPlayer
 #TODO: you can import more modules, if needed
 import numpy as np
 import time
+import networkx as nx
 
 
 class Player(AbstractPlayer):
@@ -21,8 +22,6 @@ class Player(AbstractPlayer):
         #minimum duration for fruit existance
         self.duration = 0
         #these values are for heuristic calculation
-        self.stuck = 0.0
-        self.en_stuck = 0.0
         self.num_turns = 0
 
     def set_game_params(self, board):
@@ -178,16 +177,13 @@ class Player(AbstractPlayer):
             self.fruits.pop(pos)
             self.board[pos] = 0
 
-        (self.stuck, self.en_stuck) = (self.stuck + self.stuck_val([p for p in self.succ(self.pos)]), self.en_stuck) if turn == 1 else \
-            (self.stuck, self.en_stuck + self.stuck_val([p for p in self.succ(self.en_pos)]))
-
         if len(np.where(self.board == 1)[0]) != 1:
             problem = True
 
-        return old_fruits, (self.stuck, self.en_stuck)
+        return old_fruits
 
     # undo effects of a certain move (move is from prev to pos: prev->pos, and we undo it), gets old fruits and restores it, if score in old location updates it
-    def undo_move(self, prev, pos, turn, old_fruits, old_stuck):
+    def undo_move(self, prev, pos, turn, old_fruits):
         #if len(self.fruits) != len(old_fruits):
         #    print(old_fruits)
         self.fruits = old_fruits
@@ -205,7 +201,6 @@ class Player(AbstractPlayer):
         else:
             self.en_score -= score
 
-        (self.stuck, self.en_stuck) = old_stuck[0], old_stuck[1]
 
 
     #checks if move to pos is legal
@@ -221,7 +216,7 @@ class Player(AbstractPlayer):
             if self.is_legal(p):
                 #make player move
                 prev = self.pos
-                old_fruits, old_stuck = self.effect_move(p, 1)
+                old_fruits = self.effect_move(p, 1)
 
                 #calculate minimax values for move and maximize
                 val = self.MiniMax(2, lim)
@@ -230,7 +225,7 @@ class Player(AbstractPlayer):
                 best = d if curr_max == val else best
 
                 #reset player move
-                self.undo_move(prev, p, 1, old_fruits, old_stuck)
+                self.undo_move(prev, p, 1, old_fruits)
                 self.pos = prev
         if best is None:
             print(self.pos)
@@ -255,7 +250,7 @@ class Player(AbstractPlayer):
                 # make player move
 
                 prev_pos = self.pos
-                old_fruits, old_stuck = self.effect_move(pos, 1)
+                old_fruits = self.effect_move(pos, 1)
                 #find minimax value for player
 
                 val = self.MiniMax(2, lim - 1)
@@ -264,7 +259,7 @@ class Player(AbstractPlayer):
                 curr_max = max(val, curr_max)
 
                 # reset player move
-                self.undo_move(prev_pos, pos, 1, old_fruits, old_stuck)
+                self.undo_move(prev_pos, pos, 1, old_fruits)
                 self.pos = prev_pos
             return curr_max  #maximize our player, minimize the other
         #turn is enemy agent
@@ -274,7 +269,7 @@ class Player(AbstractPlayer):
 
                 #make rival move
                 prev = self.en_pos
-                old_fruits, old_stuck = self.effect_move(pos, 2)
+                old_fruits = self.effect_move(pos, 2)
                 #find minimax value for rival
                 val = self.MiniMax(1, lim - 1)
 
@@ -282,7 +277,7 @@ class Player(AbstractPlayer):
                 curr_min = min(val, curr_min)
 
                 #reset rival move
-                self.undo_move(prev, pos, 2, old_fruits, old_stuck)
+                self.undo_move(prev, pos, 2, old_fruits)
                 self.en_pos = prev
             return curr_min  #maximize our player, minimize the other
 
@@ -352,46 +347,29 @@ class Player(AbstractPlayer):
         en_next = [p for p in self.succ(self.en_pos)]
 
         #weigths
-        w_stuck = 0.2 * self.penalty_score  #weight for penalty of bed moving position, getting stuck and etc.
-        w_score = 0.3  #weight for speculative score (score not yet achieved)
-
-        #check waste of space
-        stuck = [0.0, 0.0]  #0- player 1, 1- player 2
-        nxt = p_next
-        stuck[0] = self.stuck_val(nxt) * w_stuck + self.stuck * self.penalty_score
-        nxt = en_next
-        stuck[1] = self.stuck_val(nxt) * w_stuck + self.en_stuck * self.penalty_score
+        w_score = 0.2  #weight for speculative score (score not yet achieved)
+        w_reach = 0.6 #factor for reachable squares
 
 
-        ##stuck[0] = 4-len(p_next) if p_next is not [] else -1
-        ##stuck[1] = 4-len(en_next) if en_next is not [] else -1
 
-        ##return stuck[0], stuck[1]
-
+        #calculating factor of reachable squares for each player and reachable fruits
+        reach = self.reachable(w_reach, w_score)
         #get fruits on board which are closer to us or to opponent, and distance is lower than duration of fruit
-        fruits = [0.0, 0.0]
-        #gets maximum reachable and closer fruit
-        for pos in self.fruits.keys():
-            d1 = self.distance(self.pos, pos)
-            d2 = self.distance(self.en_pos, pos)
-            dur = self.fruits[pos]['duration']
-            if d1 <= dur/2 or d2 <= dur/2:
-                fruits = [fruits[0] + self.fruits[pos]['value'] * w_score, fruits[1]] if d1 > d2 else [fruits[0], fruits[1] + self.fruits[pos]['value'] * w_score]
-        eps = 0.000001  #meant for keeping 0 only as utility for draw, prefers keep playing instead of draw
-        return self.score + fruits[0] - stuck[0] + eps, self.en_score + fruits[1] - stuck[1]  # score is the real points taken so far by each player
+
+        #eps = 0.000001  #meant for keeping 0 only as utility for draw, prefers keep playing instead of draw
+        return self.score + reach[0], self.en_score + reach[1]  # score is the real points taken so far by each player
 
     @staticmethod
     def stuck_val(nxt):
         if len(nxt) == 2:
-            return 1
-            '''
+            #return 1
             if (nxt[0][0] == nxt[1][0] and nxt[0][1] != nxt[1][1]) or (nxt[0][1] == nxt[1][1] and nxt[0][0] != nxt[1][0]):
                 return 1
             else:
                 return 0
-            '''
+
         elif len(nxt) == 1:
-            return 0
+            return 0.25
         else:
             return 0
 
@@ -402,6 +380,73 @@ class Player(AbstractPlayer):
 
     @staticmethod
     def count_ones(board):
-        counter = len(np.where(board == 2)[0])
+        counter = len(np.where(board == 1)[0])
         return counter
+
+    #calculates the number of reachable squares for both players, if both players in the same part, checks how many are closer to each player
+    def reachable(self, weight, fweight):
+        g = nx.Graph().to_undirected()
+        for i in range(len(self.board)):
+            for j in range(len(self.board[i])):
+                p = (i, j)
+                if self.board[p] != -1:  #blank or player or opp
+                    nxt = [p for p in self.succ(p)]
+                    for n in nxt:
+                        if self.board[n] != -1: #blank or player or opp
+                            #if [self.board[p], self.board[n]] in [[1,2],[2,1]]:
+                            #    break
+                            g.add_edge(p, n)
+                    g.add_edge(p,p)
+        ourscc = nx.node_connected_component(g, self.pos)
+        opscc = nx.node_connected_component(g, self.en_pos)
+        #we and opponent in are not seperate, returns positive value for player with more blocks closer to him
+        if ourscc == opscc:
+            fruits = [0, 0]
+            squares = (0, 0)
+            for p in ourscc:
+                if p in self.fruits.keys():
+                    d1 = len(nx.shortest_path(g, self.pos, p, lambda x, y, z: 1))
+                    d2 = len(nx.shortest_path(g, self.en_pos, p, lambda x, y, z: 1))
+                    if d2 > d1 >= self.fruits[p]['duration']:
+                        fruits[0] += self.fruits[p]['value'] * fweight
+                    elif d1 > d2 >= self.fruits[p]['duration']:
+                        fruits[1] += self.fruits[p]['value'] * fweight
+
+                if p not in [1, 2]:
+                    d1 = self.distance(p, self.pos)
+                    d2 = self.distance(p, self.en_pos)
+                    d1 = len(nx.shortest_path(g, self.pos, p, lambda x, y, z: 1))
+                    d2 = len(nx.shortest_path(g, self.en_pos, p, lambda x, y, z: 1))
+                    squares = (squares[0] + 1, squares[1]) if d1 < d2 else (squares[0], squares[1] + 1) if d2 < d1 else squares
+            value = abs(squares[0] - squares[1])/(squares[0] + squares[1]) * self.penalty_score * weight / 2
+            if squares[0] > squares[1]:
+                return value + fruits[0], fruits[1]
+            elif squares[1] > squares[0]:
+                return fruits[0], value + fruits[1]
+            else:
+                return fruits[0], fruits[1]
+
+            #return value, 0 if squares[0] > squares[1] else 0, value \
+            #    if squares[1] > squares[0] else 0, 0
+        #we and opponent in are seperate, returns positive value for player with more squares
+        else:
+            fruits = [0, 0]
+            for p in self.fruits.keys():
+                if p in ourscc:
+                    d = len(nx.shortest_path(g, self.pos, p, lambda x, y, z: 1))
+                    if d <= self.fruits[p]['duration']:
+                        fruits[0] += self.fruits[p]['value'] * fweight
+                if p in opscc:
+                    d = len(nx.shortest_path(g, self.en_pos, p, lambda x, y, z: 1))
+                    if d <= self.fruits[p]['duration']:
+                        fruits[1] += self.fruits[p]['value'] * fweight
+            squares = (len(ourscc), len(opscc))
+            value = abs(squares[0] - squares[1])/(squares[0] + squares[1]) * self.penalty_score * weight
+            if squares[0] > squares[1]:
+                return value + fruits[0], fruits[1]
+            elif squares[1] > squares[0]:
+                return fruits[0], value + fruits[1]
+            else:
+                return fruits[0], fruits[1]
+
 

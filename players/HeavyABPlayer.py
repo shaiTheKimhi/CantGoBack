@@ -32,9 +32,8 @@ class Player(AbstractPlayer):
             - direction: tuple, specifing the Player's movement, chosen from self.directions
         """
         # TODO: erase the following line and implement this function.
-        move, val = self.ab.best_move(3)  #limit is 3 permanently
-        if move is None:
-            print(self.ab.minimax.pos)
+        move, val = self.ab.best_move(2)  #limit is 3 permanently
+
         pos = (self.ab.minimax.pos[0] + move[0], self.ab.minimax.pos[1] + move[1])
         self.ab.minimax.effect_move(pos, 1)
         return move

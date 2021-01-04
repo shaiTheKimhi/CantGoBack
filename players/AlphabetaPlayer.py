@@ -29,7 +29,7 @@ class Player(AbstractPlayer):
                 # make player move
 
                 prev_pos = self.minimax.pos
-                old_fruits, old_stuck = self.minimax.effect_move(pos, 1)
+                old_fruits = self.minimax.effect_move(pos, 1)
                 # find minimax value for player
                 val = self.MinimaxAB(2, lim - 1, alpha, beta)
 
@@ -38,7 +38,7 @@ class Player(AbstractPlayer):
 
                 alpha = max(curr_max, alpha)
                 # reset player move
-                self.minimax.undo_move(prev_pos, pos, 1, old_fruits, old_stuck)
+                self.minimax.undo_move(prev_pos, pos, 1, old_fruits)
                 self.minimax.pos = prev_pos
 
                 if curr_max >= beta:
@@ -51,7 +51,7 @@ class Player(AbstractPlayer):
             for pos in self.minimax.succ(self.minimax.en_pos):
                 # make rival move
                 prev = self.minimax.en_pos
-                old_fruits, old_stuck = self.minimax.effect_move(pos, 2)
+                old_fruits = self.minimax.effect_move(pos, 2)
                 # find minimax value for rival
                 val = self.MinimaxAB(1, lim - 1, alpha, beta)
 
@@ -61,7 +61,7 @@ class Player(AbstractPlayer):
                 beta = min(curr_min, beta)
 
                 # reset rival move
-                self.minimax.undo_move(prev, pos, 2, old_fruits, old_stuck)
+                self.minimax.undo_move(prev, pos, 2, old_fruits)
                 self.minimax.en_pos = prev
                 if curr_min <= alpha:
                     return -float('inf')  #cut branch, maximizing caller will not be taken
@@ -78,7 +78,7 @@ class Player(AbstractPlayer):
             if self.minimax.is_legal(p):
                 # make player move
                 prev = self.minimax.pos
-                old_fruits, old_stuck = self.minimax.effect_move(p, 1)
+                old_fruits = self.minimax.effect_move(p, 1)
 
                 # calculate minimax values for move and maximize
                 val = self.MinimaxAB(2, lim, -float('inf'), float('inf'))  # could replace curr_max to -inf if does not work, should work
@@ -87,7 +87,7 @@ class Player(AbstractPlayer):
                 best = d if curr_max == val else best
 
                 # reset player move
-                self.minimax.undo_move(prev, p, 1, old_fruits, old_stuck)
+                self.minimax.undo_move(prev, p, 1, old_fruits)
                 self.minimax.pos = prev
 
         #debug, should never happen anyway
